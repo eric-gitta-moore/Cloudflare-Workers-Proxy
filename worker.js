@@ -1,3 +1,11 @@
+// 域名白名单配置
+const DOMAIN_WHITELIST = [
+  'example.com',
+  'www.example.com',
+  'github.com',
+  'www.github.com'
+];
+
 addEventListener('fetch', event => {
   event.respondWith(handleRequest(event.request));
 });
@@ -6,7 +14,7 @@ async function handleRequest(request) {
   try {
       const url = new URL(request.url);
 
-      // 如果访问根目录，返回HTML
+      // 如果访问根目录，返回 HTML
       if (url.pathname === "/") {
           return new Response(getRootHtml(), {
               headers: {
@@ -20,6 +28,13 @@ async function handleRequest(request) {
 
       // 判断用户输入的 URL 是否带有协议
       actualUrlStr = ensureProtocol(actualUrlStr, url.protocol);
+
+      // 检查域名是否在白名单中
+      if (!isDomainWhitelisted(actualUrlStr)) {
+        return jsonResponse({
+          error: 'Access denied: Domain not in whitelist'
+        }, 403);
+      }
 
       // 保留查询参数
       actualUrlStr += url.search;
@@ -73,6 +88,19 @@ async function handleRequest(request) {
 // 确保 URL 带有协议
 function ensureProtocol(url, defaultProtocol) {
   return url.startsWith("http://") || url.startsWith("https://") ? url : defaultProtocol + "//" + url;
+}
+
+// 检查域名是否在白名单中
+function isDomainWhitelisted(url) {
+  try {
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname.toLowerCase();
+    return DOMAIN_WHITELIST.some(domain => 
+      hostname === domain || hostname.endsWith('.' + domain)
+    );
+  } catch (error) {
+    return false;
+  }
 }
 
 // 处理重定向
