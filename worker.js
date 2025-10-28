@@ -1,22 +1,21 @@
-// 获取域名白名单配置 - 支持环境变量和默认配置
-function getDomainWhitelist() {
-  // 优先使用环境变量 WHITELIST_DOMAINS（逗号分隔）
-  if (typeof WHITELIST_DOMAINS !== 'undefined' && WHITELIST_DOMAINS) {
-    return WHITELIST_DOMAINS.split(',').map(domain => domain.trim().toLowerCase()).filter(Boolean);
+export default {
+  async fetch(request, env, ctx) {
+    return handleRequest(request, env, ctx);
   }
-  
+};
+
+// 获取域名白名单配置 - 支持环境变量和默认配置
+function getDomainWhitelist(env) {
+  // 优先使用环境变量 WHITELIST_DOMAINS（逗号分隔）
+  const whitelist = env?.WHITELIST_DOMAINS;
+  if (whitelist) {
+    return whitelist.split(',').map(domain => domain.trim().toLowerCase()).filter(Boolean);
+  }
   // 默认白名单空，即放行所有
   return [];
 }
 
-// 初始化白名单
-const DOMAIN_WHITELIST = getDomainWhitelist();
-
-addEventListener('fetch', event => {
-  event.respondWith(handleRequest(event.request));
-});
-
-async function handleRequest(request) {
+async function handleRequest(request, env, ctx) {
   try {
       const url = new URL(request.url);
 
@@ -36,7 +35,8 @@ async function handleRequest(request) {
       actualUrlStr = ensureProtocol(actualUrlStr, url.protocol);
 
       // 检查域名是否在白名单中
-      if (!isDomainWhitelisted(actualUrlStr)) {
+      const domainWhitelist = getDomainWhitelist(env);
+      if (!isDomainWhitelisted(actualUrlStr, domainWhitelist)) {
         return jsonResponse({
           error: 'Access denied: Domain not in whitelist'
         }, 403);
@@ -97,17 +97,17 @@ function ensureProtocol(url, defaultProtocol) {
 }
 
 // 检查域名是否在白名单中
-function isDomainWhitelisted(url) {
+function isDomainWhitelisted(url, whitelist) {
   try {
     const urlObj = new URL(url);
     const hostname = urlObj.hostname.toLowerCase();
     
     // 如果白名单为空，允许所有域名（向后兼容）
-    if (DOMAIN_WHITELIST.length === 0) {
+    if (whitelist.length === 0) {
       return true;
     }
     
-    return DOMAIN_WHITELIST.some(domain => 
+    return whitelist.some(domain => 
       hostname === domain || hostname.endsWith('.' + domain)
     );
   } catch (error) {
