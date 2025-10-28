@@ -5,13 +5,8 @@ function getDomainWhitelist() {
     return WHITELIST_DOMAINS.split(',').map(domain => domain.trim().toLowerCase()).filter(Boolean);
   }
   
-  // 默认白名单配置
-  return [
-    'example.com',
-    'www.example.com',
-    'github.com',
-    'www.github.com'
-  ];
+  // 默认白名单空，即放行所有
+  return [];
 }
 
 // 初始化白名单
