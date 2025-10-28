@@ -1,10 +1,21 @@
-// 域名白名单配置
-const DOMAIN_WHITELIST = [
-  'example.com',
-  'www.example.com',
-  'github.com',
-  'www.github.com'
-];
+// 获取域名白名单配置 - 支持环境变量和默认配置
+function getDomainWhitelist() {
+  // 优先使用环境变量 WHITELIST_DOMAINS（逗号分隔）
+  if (typeof WHITELIST_DOMAINS !== 'undefined' && WHITELIST_DOMAINS) {
+    return WHITELIST_DOMAINS.split(',').map(domain => domain.trim().toLowerCase()).filter(Boolean);
+  }
+  
+  // 默认白名单配置
+  return [
+    'example.com',
+    'www.example.com',
+    'github.com',
+    'www.github.com'
+  ];
+}
+
+// 初始化白名单
+const DOMAIN_WHITELIST = getDomainWhitelist();
 
 addEventListener('fetch', event => {
   event.respondWith(handleRequest(event.request));
@@ -95,6 +106,12 @@ function isDomainWhitelisted(url) {
   try {
     const urlObj = new URL(url);
     const hostname = urlObj.hostname.toLowerCase();
+    
+    // 如果白名单为空，允许所有域名（向后兼容）
+    if (DOMAIN_WHITELIST.length === 0) {
+      return true;
+    }
+    
     return DOMAIN_WHITELIST.some(domain => 
       hostname === domain || hostname.endsWith('.' + domain)
     );
