@@ -1,3 +1,6 @@
-name = "Cloudflare-Workers-Proxy"
+name = "cloudflare-workers-proxy"
 main = "index.js"
 compatibility_date = "2025-10-28"
+
+[observability]
+enabled = true
