@@ -1,5 +1,5 @@
 name = "cloudflare-workers-proxy"
-main = "index.js"
+main = "./worker.js"
 compatibility_date = "2025-10-28"
 
 [observability]
