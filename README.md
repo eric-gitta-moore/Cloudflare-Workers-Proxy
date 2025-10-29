@@ -45,6 +45,17 @@
   - 如果未设置此变量，则允许所有域名（向后兼容）
   - 域名匹配支持精确匹配和子域名匹配，例如 `example.com` 会同时匹配 `example.com` 和 `sub.example.com`
 
+### PORTAL_PAGE
+
+- **描述**: 选择使用哪个页面作为门户页面
+- **格式**: 字符串，可选值为 `"portal.html"` 或 `"nginx.html"`
+- **示例**: `"nginx.html"`
+- **默认值**: `"portal.html"`
+- **说明**: 
+  - 如果设置为 `"portal.html"`，将使用美观的代理界面（默认选项）
+  - 如果设置为 `"nginx.html"`，将使用简单的 nginx 欢迎页面
+  - 此环境变量允许用户根据需要选择不同的门户界面
+
 ### 如何设置环境变量
 
 在 Cloudflare Workers 中设置环境变量的方法：
@@ -66,6 +77,7 @@
    ```toml
    [vars]
    WHITELIST_DOMAINS = "example.com,google.com"
+   PORTAL_PAGE = "nginx.html"
    ```
 
 ## 使用方法

@@ -4,3 +4,8 @@ compatibility_date = "2025-10-28"
 
 [observability]
 enabled = true
+
+# 环境变量配置
+[vars]
+# PORTAL_PAGE: 选择使用哪个页面作为门户页面，可选值: "portal.html" 或 "nginx.html"，默认为 "portal.html"
+# PORTAL_PAGE = "portal.html"

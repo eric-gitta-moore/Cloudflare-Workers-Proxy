@@ -15,13 +15,19 @@ function getDomainWhitelist(env) {
   return [];
 }
 
+// 获取门户页面配置 - 支持环境变量和默认配置
+function getPortalPage(env) {
+  // 优先使用环境变量 PORTAL_PAGE，默认为 portal.html
+  return env?.PORTAL_PAGE || 'portal.html';
+}
+
 async function handleRequest(request, env, ctx) {
   try {
       const url = new URL(request.url);
 
       // 如果访问根目录，返回 HTML
       if (url.pathname === "/") {
-          return new Response(await getRootHtml(), {
+          return new Response(await getRootHtml(env), {
               headers: {
                   'Content-Type': 'text/html; charset=utf-8'
               }
@@ -172,10 +178,13 @@ function setCorsHeaders(headers) {
 }
 
 // 返回根目录的 HTML
-async function getRootHtml() {
-  return import('./portal.html').then(module => module.default);
-}
-
-async function getNginxHtml() {
-  return import('./nginx.html').then(module => module.default);
+async function getRootHtml(env) {
+  const portalPage = getPortalPage(env);
+  
+  if (portalPage === 'nginx.html') {
+    return import('./nginx.html').then(module => module.default);
+  } else {
+    // 默认返回 portal.html
+    return import('./portal.html').then(module => module.default);
+  }
 }
