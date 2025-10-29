@@ -1,4 +1,4 @@
-name = "cloudflare-workers-proxy"
+name = "worker-transfer"
 main = "./worker.js"
 compatibility_date = "2025-10-28"
 
