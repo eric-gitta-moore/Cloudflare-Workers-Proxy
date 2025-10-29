@@ -198,7 +198,7 @@ async function handleHtmlContent(response, protocol, host, actualUrlStr, isUsing
 
 // 替换 HTML 内容中的相对路径
 function replaceRelativePaths(text, protocol, host, origin, isUsingExemptPath, whitelistExemptPath) {
-  const regex = new RegExp('((href|src|action)=["\'])', 'g');
+  const regex = new RegExp('((href|src|action)=["\'])/(?!/)', 'g');
   
   if (isUsingExemptPath && whitelistExemptPath) {
     return text.replace(regex, `$1${protocol}//${host}/${whitelistExemptPath}/${origin}/`);
