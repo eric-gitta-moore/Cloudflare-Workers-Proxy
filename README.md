@@ -30,6 +30,44 @@
 
 6. 测试：访问您的域名或者 Cloudflare Workers URL 会看到一个输入框，您可以在其中输入要代理的目标网站的 URL，然后点击 "进入代理" 按钮进行访问。
 
+## 环境变量配置
+
+本项目支持通过环境变量进行配置，以便更好地控制代理行为。
+
+### WHITELIST_DOMAINS
+
+- **描述**: 配置允许代理的域名白名单
+- **格式**: 逗号分隔的域名列表
+- **示例**: `example.com,google.com,github.com`
+- **默认值**: 空（允许所有域名）
+- **说明**: 
+  - 如果设置了此变量，只有列表中的域名及其子域名会被允许代理
+  - 如果未设置此变量，则允许所有域名（向后兼容）
+  - 域名匹配支持精确匹配和子域名匹配，例如 `example.com` 会同时匹配 `example.com` 和 `sub.example.com`
+
+### 如何设置环境变量
+
+在 Cloudflare Workers 中设置环境变量的方法：
+
+1. **通过 Cloudflare Dashboard**:
+   - 登录 Cloudflare Dashboard
+   - 进入 Workers & Pages
+   - 选择您的 Worker
+   - 点击 "Settings" 标签
+   - 在 "Environment Variables" 部分添加变量名和值
+
+2. **通过 Wrangler CLI**:
+   ```bash
+   wrangler secret put WHITELIST_DOMAINS
+   ```
+   然后输入您的域名列表
+
+3. **通过 wrangler.toml 配置**:
+   ```toml
+   [vars]
+   WHITELIST_DOMAINS = "example.com,google.com"
+   ```
+
 ## 使用方法
 
 要使用此反向代理访问其他网站，请按照以下步骤操作：
