@@ -56,6 +56,18 @@
   - 如果设置为 `"nginx.html"`，将使用简单的 nginx 欢迎页面
   - 此环境变量允许用户根据需要选择不同的门户界面
 
+### WHITELIST_EXEMPT_PATH
+
+- **描述**: 配置白名单豁免路径，使用此路径前缀的请求将绕过白名单检查
+- **格式**: 字符串，作为URL路径前缀
+- **示例**: `"WHITE_PATH"`
+- **默认值**: 空（不启用豁免功能）
+- **说明**: 
+  - 如果设置了此变量，所有以指定路径前缀开头的请求将绕过白名单检查
+  - 这对于需要临时访问不在白名单中的网站或为特定用户提供无限制访问权限非常有用
+  - 使用示例：如果设置为 `"WHITE_PATH"`，则 `https://your-worker.com/WHITE_PATH/https://github.com` 将直接代理到GitHub，无需检查GitHub是否在白名单中
+  - 注意：请谨慎使用此功能，因为它可能会绕过您设置的安全限制
+
 ### 如何设置环境变量
 
 在 Cloudflare Workers 中设置环境变量的方法：
@@ -78,11 +90,14 @@
    [vars]
    WHITELIST_DOMAINS = "example.com,google.com"
    PORTAL_PAGE = "nginx.html"
+   WHITELIST_EXEMPT_PATH = "WHITE_PATH"
    ```
 
 ## 使用方法
 
 要使用此反向代理访问其他网站，请按照以下步骤操作：
+
+### 基本使用方式
 
 1. 发出请求：只需向您的 Cloudflare Workers URL 发出请求，将请求发送到目标网站。
 
@@ -90,15 +105,29 @@
 
    将 `your-worker-url.com` 替换为您的 Cloudflare Workers URL，`example.com` 替换为您要代理的目标网站的地址。
 
-2. 处理重定向
+2. 使用参数方式（支持自定义请求头）：
+
+   示例请求：`https://your-worker-url.com/?params={"target":"https://example.com","headers":{"user-agent":"Mozilla/5.0"}}`
+
+   这种方式允许您指定目标URL和自定义请求头，以JSON格式提供参数。
+
+3. 使用白名单豁免路径（绕过白名单检查）：
+
+   示例请求：`https://your-worker-url.com/WHITE_PATH/https://github.com`
+
+   如果设置了 `WHITELIST_EXEMPT_PATH` 环境变量为 `"WHITE_PATH"`，则所有以 `/WHITE_PATH/` 开头的请求将绕过白名单检查。
+
+### 高级功能
+
+1. 处理重定向
 
    反向代理脚本能够处理重定向并适当修改资源路径，以确保正确性。
 
-3. 允许跨域请求
+2. 允许跨域请求
 
    反向代理添加了 CORS（跨源资源共享）头部，以允许跨域请求。这意味着您可以在前端 JavaScript 代码中从不同域（不同域名）发起请求，而不会受到浏览器的跨域安全限制。
 
-4. 用户友好界面
+3. 用户友好界面
 
    如果您未提供目标网站的 URL，此反向代理还提供了一个用户友好的界面。用户可以在此界面中输入目标网站的 URL，然后点击 "进入代理" 按钮，以便快速代理访问目标网站。
 
