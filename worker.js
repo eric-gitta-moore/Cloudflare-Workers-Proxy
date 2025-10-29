@@ -26,7 +26,7 @@ async function handleRequest(request, env, ctx) {
       const url = new URL(request.url);
 
       // 如果访问根目录，返回 HTML
-      if (url.pathname === "/") {
+      if (url.pathname === "/" && !url.searchParams.has('params')) {
           return new Response(await getRootHtml(env), {
               headers: {
                   'Content-Type': 'text/html; charset=utf-8'
@@ -34,8 +34,30 @@ async function handleRequest(request, env, ctx) {
           });
       }
 
-      // 从请求路径中提取目标 URL
+      // 从请求路径中提取目标 URL（原有方式）
       let actualUrlStr = decodeURIComponent(url.pathname.replace("/", ""));
+      // params query 重写请求头
+      let overrideHeaders = {}
+
+      // 检查是否使用新的参数方式
+      if (url.searchParams.has('params')) {
+        try {
+          const params = JSON.parse(url.searchParams.get('params'));
+          if (!params.target) {
+            return jsonResponse({
+              error: 'Missing target URL in params'
+            }, 400);
+          }
+          
+          actualUrlStr = params.target;
+          Object.assign(overrideHeaders, params.headers)
+        } catch (error) {
+          return jsonResponse({
+            error: 'Invalid params format: ' + error.message
+          }, 400);
+        }
+      }
+
 
       // 判断用户输入的 URL 是否带有协议
       actualUrlStr = ensureProtocol(actualUrlStr, url.protocol);
@@ -56,7 +78,7 @@ async function handleRequest(request, env, ctx) {
 
       // 创建一个新的请求以访问目标 URL
       const modifiedRequest = new Request(actualUrlStr, {
-          headers: newHeaders,
+          headers: { ...newHeaders, ...overrideHeaders },
           method: request.method,
           body: request.body,
           redirect: 'manual'

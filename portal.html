@@ -84,13 +84,36 @@
                   <div class="card">
                       <div class="card-content">
                           <span class="card-title center-align"><i class="material-icons left">link</i>Proxy Everything</span>
-                          <form id="urlForm" onsubmit="redirectToProxy(event)">
-                              <div class="input-field">
-                                  <input type="text" id="targetUrl" placeholder="在此输入目标地址" required>
-                                  <label for="targetUrl">目标地址</label>
+                          <div class="row">
+                              <div class="col s12">
+                                  <ul class="tabs">
+                                      <li class="tab col s6"><a class="active" href="#simple-mode">简单模式</a></li>
+                                      <li class="tab col s6"><a href="#advanced-mode">高级模式</a></li>
+                                  </ul>
                               </div>
-                              <button type="submit" class="btn waves-effect waves-light teal darken-2 full-width">跳转</button>
-                          </form>
+                              <div id="simple-mode" class="col s12">
+                                  <form id="urlForm" onsubmit="redirectToProxy(event)">
+                                      <div class="input-field">
+                                          <input type="text" id="targetUrl" placeholder="在此输入目标地址" required>
+                                          <label for="targetUrl">目标地址</label>
+                                      </div>
+                                      <button type="submit" class="btn waves-effect waves-light teal darken-2 full-width">跳转</button>
+                                  </form>
+                              </div>
+                              <div id="advanced-mode" class="col s12">
+                                  <form id="advancedForm" onsubmit="redirectToAdvancedProxy(event)">
+                                      <div class="input-field">
+                                          <input type="text" id="advancedTargetUrl" placeholder="在此输入目标地址" required>
+                                          <label for="advancedTargetUrl">目标地址</label>
+                                      </div>
+                                      <div class="input-field">
+                                          <textarea id="customHeaders" class="materialize-textarea" placeholder='{"user-agent": "Mozilla/5.0..."}'></textarea>
+                                          <label for="customHeaders">自定义请求头 (JSON格式)</label>
+                                      </div>
+                                      <button type="submit" class="btn waves-effect waves-light teal darken-2 full-width">跳转</button>
+                                  </form>
+                              </div>
+                          </div>
                       </div>
                   </div>
               </div>
@@ -99,11 +122,45 @@
   </div>
   <script src="https://s4.zstatic.net/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
   <script>
+      // 初始化选项卡
+      document.addEventListener('DOMContentLoaded', function() {
+          const tabs = document.querySelectorAll('.tabs');
+          M.Tabs.init(tabs);
+      });
+      
       function redirectToProxy(event) {
           event.preventDefault();
           const targetUrl = document.getElementById('targetUrl').value.trim();
           const currentOrigin = window.location.origin;
           window.open(currentOrigin + '/' + encodeURIComponent(targetUrl), '_blank');
+      }
+      
+      function redirectToAdvancedProxy(event) {
+          event.preventDefault();
+          const targetUrl = document.getElementById('advancedTargetUrl').value.trim();
+          const customHeadersText = document.getElementById('customHeaders').value.trim();
+          
+          let params = {
+              target: targetUrl
+          };
+          
+          // 如果有自定义请求头，解析并添加到参数中
+          if (customHeadersText) {
+              try {
+                  const customHeaders = JSON.parse(customHeadersText);
+                  if (typeof customHeaders !== 'object' || customHeaders === null) {
+                      throw new Error('自定义请求头必须是一个对象');
+                  }
+                  params.headers = customHeaders;
+              } catch (error) {
+                  alert('自定义请求头格式错误，请输入有效的JSON格式');
+                  return;
+              }
+          }
+          
+          const currentOrigin = window.location.origin;
+          const paramsString = encodeURIComponent(JSON.stringify(params));
+          window.open(currentOrigin + '/?params=' + paramsString, '_blank');
       }
   </script>
 </body>
