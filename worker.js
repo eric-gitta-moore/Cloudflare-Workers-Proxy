@@ -21,6 +21,12 @@ function getPortalPage(env) {
   return env?.PORTAL_PAGE || 'portal.html';
 }
 
+// 获取白名单豁免路径配置 - 支持环境变量和默认配置
+function getWhitelistExemptPath(env) {
+  // 优先使用环境变量 WHITELIST_EXEMPT_PATH
+  return env?.WHITELIST_EXEMPT_PATH || '';
+}
+
 async function handleRequest(request, env, ctx) {
   try {
       const url = new URL(request.url);
@@ -38,6 +44,15 @@ async function handleRequest(request, env, ctx) {
       let actualUrlStr = decodeURIComponent(url.pathname.replace("/", ""));
       // params query 重写请求头
       let overrideHeaders = {}
+      
+      // 检查是否使用了白名单豁免路径
+      const whitelistExemptPath = getWhitelistExemptPath(env);
+      const isUsingExemptPath = whitelistExemptPath && url.pathname.startsWith('/' + whitelistExemptPath + '/');
+      
+      // 如果使用了豁免路径，从路径中移除豁免路径前缀
+      if (isUsingExemptPath) {
+        actualUrlStr = decodeURIComponent(url.pathname.replace('/' + whitelistExemptPath + '/', ""));
+      }
 
       // 检查是否使用新的参数方式
       if (url.searchParams.has('params')) {
@@ -62,12 +77,14 @@ async function handleRequest(request, env, ctx) {
       // 判断用户输入的 URL 是否带有协议
       actualUrlStr = ensureProtocol(actualUrlStr, url.protocol);
 
-      // 检查域名是否在白名单中
-      const domainWhitelist = getDomainWhitelist(env);
-      if (!isDomainWhitelisted(actualUrlStr, domainWhitelist)) {
-        return jsonResponse({
-          error: 'Access denied: Domain not in whitelist'
-        }, 403);
+      // 如果不是使用豁免路径，则检查域名是否在白名单中
+      if (!isUsingExemptPath) {
+        const domainWhitelist = getDomainWhitelist(env);
+        if (!isDomainWhitelisted(actualUrlStr, domainWhitelist)) {
+          return jsonResponse({
+            error: 'Access denied: Domain not in whitelist'
+          }, 403);
+        }
       }
 
       // 保留查询参数
@@ -92,9 +109,9 @@ async function handleRequest(request, env, ctx) {
       if ([301, 302, 303, 307, 308].includes(response.status)) {
           body = response.body;
           // 创建新的 Response 对象以修改 Location 头部
-          return handleRedirect(response, body);
+          return handleRedirect(response, body, isUsingExemptPath, whitelistExemptPath);
       } else if (response.headers.get("Content-Type")?.includes("text/html")) {
-          body = await handleHtmlContent(response, url.protocol, url.host, actualUrlStr);
+          body = await handleHtmlContent(response, url.protocol, url.host, actualUrlStr, isUsingExemptPath, whitelistExemptPath);
       }
 
       // 创建修改后的响应对象
@@ -144,9 +161,16 @@ function isDomainWhitelisted(url, whitelist) {
 }
 
 // 处理重定向
-function handleRedirect(response, body) {
+function handleRedirect(response, body, isUsingExemptPath, whitelistExemptPath) {
   const location = new URL(response.headers.get('location'));
-  const modifiedLocation = `/${encodeURIComponent(location.toString())}`;
+  let modifiedLocation;
+  
+  if (isUsingExemptPath && whitelistExemptPath) {
+    modifiedLocation = `/${whitelistExemptPath}/${encodeURIComponent(location.toString())}`;
+  } else {
+    modifiedLocation = `/${encodeURIComponent(location.toString())}`;
+  }
+  
   return new Response(body, {
       status: response.status,
       statusText: response.statusText,
@@ -158,18 +182,29 @@ function handleRedirect(response, body) {
 }
 
 // 处理 HTML 内容中的相对路径
-async function handleHtmlContent(response, protocol, host, actualUrlStr) {
+async function handleHtmlContent(response, protocol, host, actualUrlStr, isUsingExemptPath, whitelistExemptPath) {
   const originalText = await response.text();
   const regex = new RegExp('((href|src|action)=["\'])/(?!/)', 'g');
-  let modifiedText = replaceRelativePaths(originalText, protocol, host, new URL(actualUrlStr).origin);
+  let modifiedText;
+  
+  if (isUsingExemptPath && whitelistExemptPath) {
+    modifiedText = replaceRelativePaths(originalText, protocol, host, new URL(actualUrlStr).origin, true, whitelistExemptPath);
+  } else {
+    modifiedText = replaceRelativePaths(originalText, protocol, host, new URL(actualUrlStr).origin, false, '');
+  }
 
   return modifiedText;
 }
 
 // 替换 HTML 内容中的相对路径
-function replaceRelativePaths(text, protocol, host, origin) {
+function replaceRelativePaths(text, protocol, host, origin, isUsingExemptPath, whitelistExemptPath) {
   const regex = new RegExp('((href|src|action)=["\'])/(?!/)', 'g');
-  return text.replace(regex, `$1${protocol}//${host}/${origin}/`);
+  
+  if (isUsingExemptPath && whitelistExemptPath) {
+    return text.replace(regex, `$1${protocol}//${host}/${whitelistExemptPath}/${origin}/`);
+  } else {
+    return text.replace(regex, `$1${protocol}//${host}/${origin}/`);
+  }
 }
 
 // 返回 JSON 格式的响应

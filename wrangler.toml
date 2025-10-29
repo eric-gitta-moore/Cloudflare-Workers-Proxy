@@ -9,3 +9,11 @@ enabled = true
 [vars]
 # PORTAL_PAGE: 选择使用哪个页面作为门户页面，可选值: "portal.html" 或 "nginx.html"，默认为 "portal.html"
 # PORTAL_PAGE = "portal.html"
+
+# WHITELIST_DOMAINS: 域名白名单，逗号分隔，例如: "example.com,github.com"
+# 如果不设置，则允许所有域名
+# WHITELIST_DOMAINS = "example.com,github.com"
+
+# WHITELIST_EXEMPT_PATH: 白名单豁免路径，使用此路径前缀的请求将绕过白名单检查
+# 例如: "WHITE_PATH"，则 /WHITE_PATH/https://github.com 将绕过白名单检查
+# WHITELIST_EXEMPT_PATH = "WHITE_PATH"
