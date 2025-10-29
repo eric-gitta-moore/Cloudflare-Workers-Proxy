@@ -155,6 +155,8 @@
 - [Cloudflare Workers 文档](https://developers.cloudflare.com/workers)
 - [Cloudflare Workers 设置](https://developers.cloudflare.com/workers/platform/settings)
 
+[![Powered by DartNode](https://dartnode.com/branding/DN-Open-Source-sm.png)](https://dartnode.com "Powered by DartNode - Free VPS for Open Source")
+
 ## 许可证
 
 本项目采用 MIT 许可证。详细信息请参阅 [LICENSE](LICENSE) 文件。
