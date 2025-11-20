@@ -95,7 +95,7 @@ async function handleRequest(request, env, ctx) {
 
       // 创建一个新的请求以访问目标 URL
       const modifiedRequest = new Request(actualUrlStr, {
-          headers: { ...newHeaders, ...overrideHeaders },
+          headers: { ...Object.fromEntries(Array.from(newHeaders.entries())), ...overrideHeaders },
           method: request.method,
           body: request.body,
           redirect: 'manual'
@@ -103,6 +103,16 @@ async function handleRequest(request, env, ctx) {
 
       // 发起对目标 URL 的请求
       const response = await fetch(modifiedRequest);
+
+      // =========== 修改开始：WebSocket 支持 ===========
+      // 如果响应状态码是 101 Switching Protocols，说明是 WebSocket 握手响应。
+      // 直接返回原始 response，不要使用 new Response() 重新包装，
+      // 否则会丢失底层的 WebSocket 连接句柄。
+      if (response.status === 101) {
+        return response;
+      }
+      // =========== 修改结束 ===========
+
       let body = response.body;
 
       // 处理重定向
